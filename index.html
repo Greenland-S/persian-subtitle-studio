@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Persian Subtitle Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --text:#2C2C2B; --text2:#7D7A75; --canvas:#FFFFFF; --soft:#F9F8F7; --soft2:#F0EFED;
+    --border:#E6E5E3; --blue:#2783DE; --blue-soft:#E5F2FC; --green:#46A171; --green-soft:#E8F1EC;
+    --red:#E56458; --red-soft:#FCE9E7; --orange:#D5803B; --orange-soft:#FBEBDE;
+    --radius:8px;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --fa:"Vazirmatn",-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--canvas);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.5}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 24px 64px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .logo{width:36px;height:36px;border-radius:8px;background:var(--blue-soft);display:flex;align-items:center;justify-content:center;flex:none}
+  h1{font-size:22px;font-weight:700;letter-spacing:-0.01em}
+  .sub{color:var(--text2);font-size:15px;margin:4px 0 24px}
+  .card{border:1px solid var(--border);border-radius:12px;background:var(--canvas);padding:24px;margin-bottom:16px}
+  .card h2{font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .rtimer{margin-left:auto;font-size:13px;font-weight:500;color:var(--text2);font-variant-numeric:tabular-nums}
+  .stepnum{width:22px;height:22px;border-radius:50%;background:var(--soft2);color:var(--text2);font-size:12px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .stepnum.done{background:var(--green-soft);color:var(--green)}
+  /* drop zone */
+  .drop{border:1.5px dashed var(--border);border-radius:var(--radius);background:var(--soft);padding:36px 24px;text-align:center;cursor:pointer;transition:border-color .15s, background .15s}
+  .drop:hover,.drop.over{border-color:var(--blue);background:var(--blue-soft)}
+  .drop .big{font-size:15px;font-weight:500}
+  .drop .hint{font-size:14px;color:var(--text2);margin-top:4px}
+  .filemeta{display:none;align-items:center;gap:12px;margin-top:12px;padding:10px 14px;background:var(--soft);border:1px solid var(--border);border-radius:var(--radius);font-size:14px}
+  .filemeta.show{display:flex}
+  .filemeta .name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .filemeta .dur{color:var(--text2);flex:none}
+  .filemeta button{margin-inline-start:auto;background:none;border:none;color:var(--text2);cursor:pointer;font-size:13px;padding:4px 8px;border-radius:6px}
+  .filemeta button:hover{background:var(--soft2);color:var(--text)}
+  /* settings */
+  .settings{display:flex;flex-wrap:wrap;gap:16px}
+  .field{flex:1 1 220px;min-width:200px}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px}
+  select{width:100%;padding:10px 12px;font-size:15px;font-family:var(--sans);color:var(--text);background:var(--canvas);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;min-height:44px}
+  select:focus{outline:2px solid var(--blue);outline-offset:1px}
+  input.txt{width:100%;padding:10px 12px;font-size:15px;font-family:var(--sans);color:var(--text);background:var(--canvas);border:1px solid var(--border);border-radius:var(--radius);min-height:44px}
+  input.txt:focus{outline:2px solid var(--blue);outline-offset:1px}
+  #geminiRow,#groqRow,#cfRow{display:none;margin-top:16px;max-width:520px}
+  #geminiRow.show,#groqRow.show,#cfRow.show{display:block}
+  #geminiRow .hint,#groqRow .hint,#cfRow .hint{font-size:13px;color:var(--text2);margin-top:6px}
+  #geminiRow .hint a,#groqRow .hint a,#cfRow .hint a{color:var(--blue)}
+  #cfRow .sub{margin-top:10px}
+  #cfRow details{margin-top:10px;font-size:13px;color:var(--text2)}
+  #cfRow details summary{cursor:pointer;font-weight:600;color:var(--blue)}
+  #cfRow details ol{margin:10px 0 0 18px;padding:0;line-height:1.7}
+  #cfRow pre{margin-top:10px;padding:12px;background:var(--canvas);border:1px solid var(--border);border-radius:var(--radius);overflow:auto;max-height:260px;font-size:12px;line-height:1.5;direction:ltr;text-align:left}
+  #cfRow .copybtn{margin-top:8px;padding:6px 12px;font-size:13px;font-family:var(--sans);cursor:pointer;background:var(--canvas);color:var(--text);border:1px solid var(--border);border-radius:var(--radius)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 20px;font-size:15px;font-weight:600;font-family:var(--sans);border-radius:var(--radius);border:1px solid transparent;cursor:pointer;transition:background .15s}
+  .btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-primary:hover{background:#1f6fc0}
+  .btn-primary:disabled{background:var(--soft2);color:var(--text2);cursor:not-allowed}
+  .btn-secondary{background:var(--canvas);border-color:var(--border);color:var(--text)}
+  .btn-secondary:hover{background:var(--soft)}
+  .genrow{margin-top:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .privacy{font-size:13px;color:var(--text2)}
+  /* progress */
+  #progressCard{display:none}
+  #progressCard.show{display:block}
+  .ptext{font-size:14px;color:var(--text2);margin-bottom:10px;min-height:21px}
+  .pbar{height:8px;background:var(--soft2);border-radius:4px;overflow:hidden}
+  .pbar>div{height:100%;width:0%;background:var(--blue);border-radius:4px;transition:width .2s}
+  .pnote{font-size:13px;color:var(--text2);margin-top:10px}
+  .stages{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .stage{display:grid;grid-template-columns:22px 1fr 48px;column-gap:10px;row-gap:5px;align-items:center;font-size:14px}
+  .stage.pending{opacity:.5}
+  .stage .sicon{width:22px;height:22px;border-radius:50%;background:var(--soft2);color:var(--text2);font-size:11px;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+  .stage.active .sicon{background:var(--blue-soft);color:var(--blue)}
+  .stage.done .sicon{background:var(--green-soft);color:var(--green)}
+  .stage .spct{text-align:right;color:var(--text2);font-size:13px;font-variant-numeric:tabular-nums}
+  .stage .sbar{grid-column:2/4;height:4px;background:var(--soft2);border-radius:2px;overflow:hidden;display:none}
+  .stage.active .sbar{display:block}
+  .stage .sbar>div{height:100%;width:0%;background:var(--blue);border-radius:2px;transition:width .2s}
+  .error{display:none;margin-top:12px;padding:12px 14px;background:var(--red-soft);color:#9c3a31;border-radius:var(--radius);font-size:14px}
+  .error.show{display:block}
+  /* results */
+  #resultCard{display:none}
+  #resultCard.show{display:block}
+  .videobox{position:relative;background:#000;border-radius:var(--radius);overflow:hidden}
+  video{display:block;width:100%;max-height:420px}
+  .cue{position:absolute;left:5%;right:5%;bottom:var(--cue-bottom,8%);text-align:center;pointer-events:none}
+  .cue span{display:inline-block;background:var(--cue-bg,rgba(0,0,0,.72));color:var(--cue-color,#fff);font-family:var(--fa);font-size:calc(clamp(16px,2.6vw,24px)*var(--cue-scale,1));line-height:1.7;padding:4px 14px;border-radius:6px;direction:rtl;unicode-bidi:plaintext}
+  .cue .en{display:block;font-family:var(--sans);font-size:calc(clamp(11px,1.7vw,15px)*var(--cue-scale,1));opacity:.85;direction:ltr}
+  .videobox:fullscreen{border-radius:0}
+  .videobox:fullscreen video{width:100%;height:100%;max-height:100vh}
+  /* playback controls & subtitle appearance */
+  .ctrlbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .btn-mini{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:4px 12px;font-size:13px;font-weight:500;font-family:var(--sans);color:var(--text);background:var(--canvas);border:1px solid var(--border);border-radius:6px;cursor:pointer}
+  .btn-mini:hover{background:var(--soft)}
+  .btn-mini:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+  select.mini{width:auto;min-height:34px;padding:4px 8px;font-size:13px}
+  .subopts{margin-top:12px;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;background:var(--soft)}
+  .subopts summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--text2)}
+  .optgrid{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px}
+  .opt{display:flex;flex-direction:column;gap:6px;flex:1 1 150px;min-width:150px}
+  .opt>label{font-size:12px;font-weight:600;color:var(--text2)}
+  .opt .val{font-weight:400;font-variant-numeric:tabular-nums}
+  .optrow{display:flex;align-items:center;gap:8px}
+  input[type=range]{width:100%;accent-color:var(--blue);margin:8px 0}
+  input[type=color]{width:44px;height:34px;padding:2px;border:1px solid var(--border);border-radius:6px;background:var(--canvas);cursor:pointer;flex:none}
+  .dlrow{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0 24px}
+  .seglist{border:1px solid var(--border);border-radius:var(--radius);max-height:340px;overflow-y:auto}
+  .seg{display:grid;grid-template-columns:92px 1fr;gap:4px 16px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+  .seg:last-child{border-bottom:none}
+  .seg:hover{background:var(--soft)}
+  .seg.active{background:var(--blue-soft)}
+  .seg .time{font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums;padding-top:3px}
+  .seg .en{grid-column:2;font-size:13px;color:var(--text2)}
+  .seg .fa{grid-column:2;font-family:var(--fa);font-size:15px;direction:rtl;text-align:right;border-radius:4px;padding:2px 4px}
+  .seg .fa:focus{outline:2px solid var(--blue);background:var(--canvas)}
+  .listhint{font-size:13px;color:var(--text2);margin:10px 2px 0}
+  footer{margin-top:24px;font-size:13px;color:var(--text2);text-align:center}
+  @media (max-width:480px){
+    .wrap{padding:20px 16px 48px}
+    .card{padding:16px}
+    .seg{grid-template-columns:1fr}
+    .seg .time{grid-column:1}
+    .seg .en,.seg .fa{grid-column:1}
+  }
+  footer.memorial{margin-top:6px;font-weight:600;color:var(--text2);opacity:.9}
+  /* language switcher + right-to-left layout for Persian */
+  .langsel{margin-inline-start:auto;flex:0 0 auto}
+  html[dir="rtl"] body{direction:rtl;text-align:right;font-family:var(--fa),var(--sans)}
+  html[dir="rtl"] h1,html[dir="rtl"] h2,html[dir="rtl"] .sub,html[dir="rtl"] label,html[dir="rtl"] .hint,html[dir="rtl"] .pnote,html[dir="rtl"] .privacy,html[dir="rtl"] .listhint,html[dir="rtl"] footer{font-family:var(--fa),var(--sans)}
+  html[dir="rtl"] pre,html[dir="rtl"] code,html[dir="rtl"] input.txt,html[dir="rtl"] .seg .en,html[dir="rtl"] .seg .time{direction:ltr;text-align:left}
+  html[dir="rtl"] ol,html[dir="rtl"] ul{padding-right:20px;padding-left:0}
+  html[dir="rtl"] .cue span{direction:rtl}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="#2783DE" stroke-width="1.6"/><rect x="5" y="11.2" width="7" height="1.8" rx="0.9" fill="#2783DE"/><rect x="13.2" y="11.2" width="1.8" height="1.8" rx="0.9" fill="#2783DE"/></svg>
+    </div>
+    <h1>Persian Subtitle Studio</h1>
+    <select class="mini langsel" id="langSel" title="Page language" aria-label="Page language">
+      <option value="en">English</option>
+      <option value="fa">فارسی</option>
+    </select>
+  </header>
+  <p class="sub">Transcribe English videos and generate Persian (فارسی) subtitles — right in your browser.</p>
+
+  <!-- Step 1 -->
+  <section class="card" id="step1">
+    <h2><span class="stepnum" id="num1">1</span> Choose a video</h2>
+    <div class="drop" id="drop" role="button" tabindex="0" aria-label="Choose or drop a video file">
+      <div class="big">Drop an English video here, or click to browse</div>
+      <div class="hint">MP4, WebM, MOV, or audio files (MP3, WAV, M4A)</div>
+    </div>
+    <input type="file" id="fileInput" accept="video/*,audio/*" hidden>
+    <div class="filemeta" id="filemeta">
+      <span class="name" id="fname"></span>
+      <span class="dur" id="fdur"></span>
+      <button id="clearFile" type="button">Remove</button>
+    </div>
+  </section>
+
+  <!-- Step 2 -->
+  <section class="card" id="step2">
+    <h2><span class="stepnum" id="num2">2</span> Settings</h2>
+    <div class="settings">
+      <div class="field">
+        <label for="modelSel">Transcription model</label>
+        <select id="modelSel">
+          <option value="Xenova/whisper-tiny.en">Whisper Tiny — fastest (~40 MB)</option>
+          <option value="Xenova/whisper-base.en" selected>Whisper Base — balanced (~80 MB)</option>
+          <option value="Xenova/whisper-small.en">Whisper Small — most accurate (~250 MB)</option>
+          <option value="groq">Whisper Large v3 — Groq cloud, no download (needs free API key)</option>
+          <option value="cloudflare">Whisper Large v3 Turbo — Cloudflare Workers AI, free tier (needs your own Worker)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="transSel">Translation quality</label>
+        <select id="transSel">
+          <option value="Xenova/m2m100_418M" selected>M2M-100 — local &amp; private (~450 MB)</option>
+          <option value="gemini">Gemini API — cloud, best quality (needs API key)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="styleSel">Subtitle style</label>
+        <select id="styleSel">
+          <option value="fa" selected>Persian only</option>
+          <option value="both">Persian + English</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" id="geminiRow">
+      <label for="geminiKey">Gemini API key</label>
+      <input class="txt" type="password" id="geminiKey" placeholder="AIza…" autocomplete="off" spellcheck="false">
+      <div class="hint">Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. The key is stored only in this browser. With Gemini, the transcribed English text (never your video or audio) is sent to Google for translation.</div>
+    </div>
+    <div class="field" id="groqRow">
+      <label for="groqKey">Groq API key</label>
+      <input class="txt" type="password" id="groqKey" placeholder="gsk_…" autocomplete="off" spellcheck="false">
+      <div class="hint">Get a free key at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> (no credit card needed). The key is stored only in this browser. With the Groq cloud model, the extracted audio track is sent to Groq for transcription — nothing to download, and the free tier is plenty for personal use.</div>
+    </div>
+    <div class="field" id="cfRow">
+      <label for="cfWorker">Cloudflare Worker URL</label>
+      <input class="txt" type="text" id="cfWorker" placeholder="https://my-subtitles.your-name.workers.dev" autocomplete="off" spellcheck="false">
+      <div class="sub">
+        <label for="cfSecret">Worker app secret (optional)</label>
+        <input class="txt" type="password" id="cfSecret" placeholder="Only if you set APP_SECRET on the Worker" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="hint">Cloudflare’s API cannot be called straight from a web page (it blocks cross-origin browser requests), so this option talks to a tiny Worker on your own free Cloudflare account, which runs <code>@cf/openai/whisper-large-v3-turbo</code> for you. No API token is needed in this browser — it stays on Cloudflare’s side. The free Workers plan includes 10,000 neurons per day (roughly 3 hours of audio) and resets at 00:00 UTC. Only the extracted audio track — never the video — is sent to your Worker.</div>
+      <details>
+        <summary>One-time setup (about 3 minutes)</summary>
+        <ol>
+          <li>Open <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener">the Cloudflare dashboard</a> → <b>Compute (Workers)</b> → <b>Create</b> → <b>Start with Hello World</b>, give it any name, and deploy it.</li>
+          <li>Click <b>Edit code</b>, delete what is there, paste the code below, and press <b>Deploy</b>.</li>
+          <li>Go to the Worker’s <b>Settings</b> → <b>Bindings</b> → <b>Add binding</b> → <b>Workers AI</b>, and set the variable name to exactly <code>AI</code>. Deploy again.</li>
+          <li>Optional but recommended: in <b>Settings</b> → <b>Variables and Secrets</b>, add a secret named <code>APP_SECRET</code> with any password, then type that same password in the field above. This stops strangers from using your free quota.</li>
+          <li>Copy the Worker’s URL (it looks like <code>https://my-subtitles.your-name.workers.dev</code>) into the field above.</li>
+        </ol>
+        <pre id="cfWorkerCode">// Cloudflare Worker: runs Whisper for the subtitle app and allows browser calls.
+export default {
+  async fetch(request, env) {
+    const cors = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, X-App-Secret",
+      "Access-Control-Max-Age": "86400",
+    };
+    const json = (body, status = 200) =&gt;
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+    if (request.method !== "POST") return json({ success: false, errors: [{ message: "Use POST" }] }, 405);
+    if (env.APP_SECRET &amp;&amp; request.headers.get("X-App-Secret") !== env.APP_SECRET)
+      return json({ success: false, errors: [{ message: "Wrong app secret" }] }, 403);
+    try {
+      const body = await request.json();
+      const result = await env.AI.run("@cf/openai/whisper-large-v3-turbo", {
+        audio: body.audio,
+        task: body.task || "transcribe",
+        language: body.language || "en",
+      });
+      return json({ success: true, result });
+    } catch (err) {
+      return json({ success: false, errors: [{ message: String(err &amp;&amp; err.message || err) }] }, 500);
+    }
+  },
+};</pre>
+        <button type="button" class="copybtn" id="cfCopyBtn">Copy Worker code</button>
+      </details>
+    </div>
+    <div class="genrow">
+      <button class="btn btn-primary" id="goBtn" disabled>Generate Persian subtitles</button>
+      <span class="privacy">By default everything runs locally in your browser — your video never leaves your device. Models download once (from Hugging Face) and are cached. If you pick Gemini, only the transcribed text is sent to Google. If you pick the Groq or Cloudflare cloud model for transcription, the extracted audio track (never the video) is sent to that provider and there is nothing to download.</span>
+    </div>
+    <div class="error" id="errBox" role="alert"></div>
+  </section>
+
+  <!-- Progress -->
+  <section class="card" id="progressCard" aria-live="polite">
+    <h2><span class="stepnum">3</span> Working… <span class="rtimer" id="timer"></span></h2>
+    <div class="stages" id="stages"></div>
+    <div class="ptext" id="ptext">Starting…</div>
+    <div class="pbar"><div id="pfill"></div></div>
+    <div class="pnote" id="pnote">The bar above is overall progress across all steps. The first run downloads the models, which can take a few minutes on slow connections. Keep this tab open. Every finished step is saved in this browser — if something fails (e.g. a Gemini upload error), click “Generate Persian subtitles” again and it continues from where it stopped instead of starting over.</div>
+  </section>
+
+  <!-- Results -->
+  <section class="card" id="resultCard">
+    <h2><span class="stepnum done" id="numDone">✓</span> Preview &amp; download <span class="rtimer" id="doneTime"></span></h2>
+    <div class="videobox" id="videobox">
+      <video id="player" controls playsinline></video>
+      <div class="cue" id="cue"></div>
+    </div>
+    <div class="ctrlbar">
+      <button class="btn-mini" id="prevLine" title="Jump to previous subtitle line">⏮ Prev line</button>
+      <button class="btn-mini" id="back5" title="Back 5 seconds">−5s</button>
+      <button class="btn-mini" id="fwd5" title="Forward 5 seconds">+5s</button>
+      <button class="btn-mini" id="nextLine" title="Jump to next subtitle line">Next line ⏭</button>
+      <select class="mini" id="speedSel" aria-label="Playback speed">
+        <option value="0.5">0.5×</option>
+        <option value="0.75">0.75×</option>
+        <option value="1" selected>1× speed</option>
+        <option value="1.25">1.25×</option>
+        <option value="1.5">1.5×</option>
+        <option value="2">2×</option>
+      </select>
+      <button class="btn-mini" id="fsBtn" title="Full screen with subtitles">⛶ Full screen</button>
+    </div>
+    <details class="subopts" id="subopts">
+      <summary>Subtitle appearance</summary>
+      <div class="optgrid">
+        <div class="opt">
+          <label for="cueSize">Size <span class="val" id="cueSizeVal">100%</span></label>
+          <input type="range" id="cueSize" min="60" max="220" step="5" value="100">
+        </div>
+        <div class="opt">
+          <label for="cueColor">Text color</label>
+          <div class="optrow"><input type="color" id="cueColor" value="#ffffff"></div>
+        </div>
+        <div class="opt">
+          <label for="cueBg">Background &amp; opacity <span class="val" id="cueBgVal">72%</span></label>
+          <div class="optrow">
+            <input type="color" id="cueBg" value="#000000" aria-label="Background color">
+            <input type="range" id="cueBgOpacity" min="0" max="100" step="2" value="72" aria-label="Background opacity">
+          </div>
+        </div>
+        <div class="opt">
+          <label for="cuePos">Distance from bottom <span class="val" id="cuePosVal">8%</span></label>
+          <input type="range" id="cuePos" min="0" max="45" step="1" value="8">
+        </div>
+        <div class="opt" style="justify-content:flex-end;flex:0 0 auto;min-width:auto">
+          <button class="btn-mini" id="cueReset">Reset</button>
+        </div>
+      </div>
+    </details>
+    <div class="dlrow">
+      <button class="btn btn-primary" id="dlFaSrt">Download Persian .srt</button>
+      <button class="btn btn-secondary" id="dlFaVtt">Persian .vtt</button>
+      <button class="btn btn-secondary" id="dlEnSrt">English .srt</button>
+    </div>
+    <div class="seglist" id="seglist"></div>
+    <p class="listhint">Tip: click a line to jump the video there. The Persian text is editable — fix any wording before downloading.</p>
+  </section>
+
+  <footer>Speech recognition: OpenAI Whisper (local, Groq API, or Cloudflare Workers AI) · Translation: M2M-100 / Gemini API · Powered by 🤗 Transformers.js</footer>
+  <footer class="memorial">In memory of Arman Gorjian 🕊️</footer>
+</div>
+
+<script type="module">
+let tf = null; // transformers.js module, loaded lazily
+const $ = (id) => document.getElementById(id);
+
+/* ---------- page language (English / فارسی) ---------- */
+// Every visible English string has a Persian counterpart here. Switching the
+// language rewrites the static page text and re-renders the live messages.
+var FA_UI = {
+  "Persian Subtitle Studio": "استودیو زیرنویس فارسی",
+  "Transcribe English videos and generate Persian (فارسی) subtitles — right in your browser.": "ویدیوهای انگلیسی را پیاده‌سازی کنید و زیرنویس فارسی بسازید — همه‌چیز داخل مرورگر خودتان.",
+  "Choose a video": "انتخاب ویدیو",
+  "Drop an English video here, or click to browse": "ویدیوی انگلیسی را اینجا رها کنید، یا برای انتخاب کلیک کنید",
+  "MP4, WebM, MOV, or audio files (MP3, WAV, M4A)": "MP4، WebM، MOV یا فایل‌های صوتی (MP3، WAV، M4A)",
+  "Remove": "حذف",
+  "Settings": "تنظیمات",
+  "Transcription model": "مدل تبدیل گفتار به متن",
+  "Whisper Tiny — fastest (~40 MB)": "Whisper Tiny — سریع‌ترین (حدود ۴۰ مگابایت)",
+  "Whisper Base — balanced (~80 MB)": "Whisper Base — متعادل (حدود ۸۰ مگابایت)",
+  "Whisper Small — most accurate (~250 MB)": "Whisper Small — دقیق‌ترین (حدود ۲۵۰ مگابایت)",
+  "Whisper Large v3 — Groq cloud, no download (needs free API key)": "Whisper Large v3 — ابر Groq، بدون دانلود (به کلید API رایگان نیاز دارد)",
+  "Whisper Large v3 Turbo — Cloudflare Workers AI, free tier (needs your own Worker)": "Whisper Large v3 Turbo — کلادفلر Workers AI، پلن رایگان (به Worker خودتان نیاز دارد)",
+  "Translation quality": "کیفیت ترجمه",
+  "M2M-100 — local & private (~450 MB)": "M2M-100 — محلی و خصوصی (حدود ۴۵۰ مگابایت)",
+  "Gemini API — cloud, best quality (needs API key)": "Gemini API — ابری، بهترین کیفیت (به کلید API نیاز دارد)",
+  "Subtitle style": "سبک زیرنویس",
+  "Persian only": "فقط فارسی",
+  "Persian + English": "فارسی + انگلیسی",
+  "Gemini API key": "کلید API جمینای",
+  "Get a free key at": "کلید رایگان را از اینجا بگیرید:",
+  ". The key is stored only in this browser. With Gemini, the transcribed English text (never your video or audio) is sent to Google for translation.": "— کلید فقط در همین مرورگر ذخیره می‌شود. با جمینای، تنها متن انگلیسی پیاده‌شده (هرگز ویدیو یا صدای شما) برای ترجمه به گوگل فرستاده می‌شود.",
+  "Groq API key": "کلید API گروک",
+  "(no credit card needed). The key is stored only in this browser. With the Groq cloud model, the extracted audio track is sent to Groq for transcription — nothing to download, and the free tier is plenty for personal use.": "(نیازی به کارت بانکی نیست). کلید فقط در همین مرورگر ذخیره می‌شود. با مدل ابری Groq تنها صدای استخراج‌شده برای پیاده‌سازی فرستاده می‌شود — چیزی دانلود نمی‌شود و پلن رایگان برای استفادهٔ شخصی کافی است.",
+  "Cloudflare Worker URL": "آدرس Worker کلادفلر",
+  "Worker app secret (optional)": "رمز اپ Worker (اختیاری)",
+  "Cloudflare’s API cannot be called straight from a web page (it blocks cross-origin browser requests), so this option talks to a tiny Worker on your own free Cloudflare account, which runs": "API کلادفلر را نمی‌توان مستقیم از یک صفحهٔ وب صدا زد (درخواست‌های میان‌دامنه‌ای مرورگر را مسدود می‌کند)، بنابراین این گزینه با یک Worker کوچک روی حساب رایگان خودتان کار می‌کند که این مدل را اجرا می‌کند:",
+  "for you. No API token is needed in this browser — it stays on Cloudflare’s side. The free Workers plan includes 10,000 neurons per day (roughly 3 hours of audio) and resets at 00:00 UTC. Only the extracted audio track — never the video — is sent to your Worker.": "هیچ توکن APIای در این مرورگر لازم نیست — توکن سمت کلادفلر می‌ماند. پلن رایگان Workers روزانه ۱۰٬۰۰۰ نورون (تقریباً ۳ ساعت صدا) دارد و ساعت ۰۰:۰۰ به وقت UTC بازنشانی می‌شود. تنها صدای استخراج‌شده — و هرگز خود ویدیو — به Worker شما فرستاده می‌شود.",
+  "One-time setup (about 3 minutes)": "راه‌اندازی یک‌باره (حدود ۳ دقیقه)",
+  "Open": "باز کنید:",
+  "the Cloudflare dashboard": "داشبورد کلادفلر",
+  "Create": "Create",
+  ", give it any name, and deploy it.": "، هر نامی خواستید بگذارید و آن را Deploy کنید.",
+  "Click": "بزنید:",
+  ", delete what is there, paste the code below, and press": "، هرچه هست را پاک کنید، کد زیر را جای‌گذاری کنید و بزنید",
+  "Go to the Worker’s": "در Worker بروید به",
+  ", and set the variable name to exactly": "، و نام متغیر را دقیقاً این بگذارید:",
+  ". Deploy again.": "سپس دوباره Deploy کنید.",
+  "Optional but recommended: in": "اختیاری ولی توصیه‌شده: در",
+  ", add a secret named": "، یک secret با این نام بسازید:",
+  "with any password, then type that same password in the field above. This stops strangers from using your free quota.": "با هر رمزی که می‌خواهید، سپس همان رمز را در فیلد بالا وارد کنید. این کار جلوی استفادهٔ دیگران از سهمیهٔ رایگان شما را می‌گیرد.",
+  "Copy the Worker’s URL (it looks like": "آدرس Worker را (چیزی شبیه",
+  ") into the field above.": ") در فیلد بالا وارد کنید.",
+  "Copy Worker code": "کپی کد Worker",
+  "Copied ✓": "کپی شد ✓",
+  "Select the code and copy it manually": "کد را انتخاب و دستی کپی کنید",
+  "Generate Persian subtitles": "ساخت زیرنویس فارسی",
+  "By default everything runs locally in your browser — your video never leaves your device. Models download once (from Hugging Face) and are cached. If you pick Gemini, only the transcribed text is sent to Google. If you pick the Groq or Cloudflare cloud model for transcription, the extracted audio track (never the video) is sent to that provider and there is nothing to download.": "به‌صورت پیش‌فرض همه‌چیز داخل مرورگر شما اجرا می‌شود — ویدیوی شما هرگز از دستگاهتان خارج نمی‌شود. مدل‌ها یک‌بار (از Hugging Face) دانلود و ذخیره می‌شوند. اگر جمینای را انتخاب کنید، فقط متن پیاده‌شده به گوگل فرستاده می‌شود. اگر مدل ابری Groq یا کلادفلر را برای پیاده‌سازی انتخاب کنید، تنها صدای استخراج‌شده (نه ویدیو) به آن سرویس فرستاده می‌شود و چیزی دانلود نمی‌شود.",
+  "Working…": "در حال کار…",
+  "Starting…": "در حال شروع…",
+  "The bar above is overall progress across all steps. The first run downloads the models, which can take a few minutes on slow connections. Keep this tab open. Every finished step is saved in this browser — if something fails (e.g. a Gemini upload error), click “Generate Persian subtitles” again and it continues from where it stopped instead of starting over.": "نوار بالا پیشرفت کلی همهٔ مرحله‌هاست. در اجرای اول مدل‌ها دانلود می‌شوند که روی اینترنت کند ممکن است چند دقیقه طول بکشد. این تب را باز نگه دارید. هر مرحلهٔ کامل‌شده در همین مرورگر ذخیره می‌شود — اگر خطایی رخ داد (مثلاً خطای آپلود جمینای)، دوباره روی «ساخت زیرنویس فارسی» بزنید تا از همان‌جا ادامه دهد، نه از اول.",
+  "Preview & download": "پیش‌نمایش و دانلود",
+  "⏮ Prev line": "⏮ خط قبلی",
+  "Next line ⏭": "خط بعدی ⏭",
+  "1× speed": "سرعت ۱×",
+  "⛶ Full screen": "⛶ تمام‌صفحه",
+  "Subtitle appearance": "ظاهر زیرنویس",
+  "Size": "اندازه",
+  "Text color": "رنگ متن",
+  "Background & opacity": "رنگ و شفافیت پس‌زمینه",
+  "Distance from bottom": "فاصله از پایین",
+  "Reset": "بازنشانی",
+  "Download Persian .srt": "دانلود فایل .srt فارسی",
+  "Persian .vtt": "فایل .vtt فارسی",
+  "English .srt": "فایل .srt انگلیسی",
+  "Tip: click a line to jump the video there. The Persian text is editable — fix any wording before downloading.": "نکته: با کلیک روی هر خط، ویدیو به همان لحظه می‌رود. متن فارسی قابل ویرایش است — پیش از دانلود می‌توانید آن را اصلاح کنید.",
+  "In memory of Arman Gorjian 🕊️": "به یاد آرمان گرجیان 🕊️",
+  "Speech recognition: OpenAI Whisper (local, Groq API, or Cloudflare Workers AI) · Translation: M2M-100 / Gemini API · Powered by 🤗 Transformers.js": "تشخیص گفتار: Whisper از OpenAI (محلی، Groq یا کلادفلر Workers AI) · ترجمه: M2M-100 / Gemini API · با نیروی 🤗 Transformers.js",
+  /* attributes */
+  "Choose or drop a video file": "انتخاب یا رها کردن فایل ویدیو",
+  "Back 5 seconds": "۵ ثانیه عقب",
+  "Forward 5 seconds": "۵ ثانیه جلو",
+  "Jump to previous subtitle line": "پرش به خط زیرنویس قبلی",
+  "Jump to next subtitle line": "پرش به خط زیرنویس بعدی",
+  "Full screen with subtitles": "تمام‌صفحه همراه با زیرنویس",
+  "Playback speed": "سرعت پخش",
+  "Background color": "رنگ پس‌زمینه",
+  "Background opacity": "شفافیت پس‌زمینه",
+  "Only if you set APP_SECRET on the Worker": "فقط اگر روی Worker مقدار APP_SECRET را تنظیم کرده‌اید",
+  "Page language": "زبان صفحه",
+  /* live status messages */
+  "Loading AI engine…": "در حال بارگذاری موتور هوش مصنوعی…",
+  "Extracting audio from video…": "در حال استخراج صدا از ویدیو…",
+  "Loading speech model…": "در حال بارگذاری مدل گفتار…",
+  "Loading translation model…": "در حال بارگذاری مدل ترجمه…",
+  "Transcribing English speech with Groq…": "در حال پیاده‌سازی گفتار انگلیسی با Groq…",
+  "Transcribing English speech with Cloudflare Workers AI…": "در حال پیاده‌سازی گفتار انگلیسی با کلادفلر Workers AI…",
+  "Resumed from saved progress — transcription already done.": "ادامه از پیشرفت ذخیره‌شده — پیاده‌سازی قبلاً انجام شده است.",
+  "Speech model": "مدل گفتار",
+  "Translation model": "مدل ترجمه",
+  /* stage names */
+  "Extract audio": "استخراج صدا",
+  "Load speech model": "بارگذاری مدل گفتار",
+  "Transcribe English speech": "پیاده‌سازی گفتار انگلیسی",
+  "Transcribe English speech (Groq cloud)": "پیاده‌سازی گفتار انگلیسی (ابر Groq)",
+  "Transcribe English speech (Cloudflare Workers AI)": "پیاده‌سازی گفتار انگلیسی (کلادفلر Workers AI)",
+  "Translate to Persian (Gemini)": "ترجمه به فارسی (جمینای)",
+  "Load translation model": "بارگذاری مدل ترجمه",
+  "Translate to Persian": "ترجمه به فارسی",
+  /* errors and notices */
+  " · saved progress found — will resume": " · پیشرفت ذخیره‌شده پیدا شد — ادامه داده می‌شود",
+  "Enter your Gemini API key in Settings first, or switch to a local translation model.": "ابتدا کلید API جمینای را در تنظیمات وارد کنید، یا به یک مدل ترجمهٔ محلی سوییچ کنید.",
+  "Enter your Groq API key in Settings first, or switch to a local Whisper model.": "ابتدا کلید API گروک را در تنظیمات وارد کنید، یا به یک مدل محلی Whisper سوییچ کنید.",
+  "Enter the URL of your Cloudflare Worker in Settings first (see the one-time setup steps there), or switch to a local Whisper model.": "ابتدا آدرس Worker کلادفلر خود را در تنظیمات وارد کنید (مراحل راه‌اندازی همان‌جا آمده است)، یا به یک مدل محلی Whisper سوییچ کنید.",
+  "That is Cloudflare’s own API, which browsers are not allowed to call. Deploy the small Worker described in Settings and paste its URL instead.": "این آدرس، API خود کلادفلر است که مرورگرها اجازهٔ فراخوانی آن را ندارند. همان Worker کوچکی را که در تنظیمات توضیح داده شده Deploy کنید و آدرس آن را وارد کنید.",
+  "This file appears to have no audio.": "به نظر می‌رسد این فایل صدا ندارد.",
+  "No English speech was detected in this file.": "هیچ گفتار انگلیسی‌ای در این فایل پیدا نشد.",
+  "Couldn't read the audio from this file. Try an MP4 (H.264/AAC) or WebM video, or an MP3/WAV audio file.": "خواندن صدای این فایل ممکن نشد. یک ویدیوی MP4 (H.264/AAC) یا WebM، یا فایل صوتی MP3/WAV را امتحان کنید.",
+  "Something went wrong. Please check your internet connection (needed once to download the models) and try again.": "مشکلی پیش آمد. لطفاً اتصال اینترنت خود را بررسی کنید (یک‌بار برای دانلود مدل‌ها لازم است) و دوباره تلاش کنید."
+};
+
+// Messages that contain numbers are matched by pattern.
+var FA_PATTERNS = [
+  [/^Transcribing English speech… (\d+)%$/, (m, a) => `در حال پیاده‌سازی گفتار انگلیسی… ${a}٪`],
+  [/^Transcribing English speech… (\d+)% \((.+) \/ (.+) of audio\)$/, (m, a, b, c) => `در حال پیاده‌سازی گفتار انگلیسی… ${a}٪ (${b} / ${c} از صدا)`],
+  [/^Transcribing English speech with Groq… \(part (\d+) of (\d+)\)$/, (m, a, b) => `در حال پیاده‌سازی گفتار انگلیسی با Groq… (بخش ${a} از ${b})`],
+  [/^Transcribing English speech with Cloudflare Workers AI… \(part (\d+) of (\d+)\)$/, (m, a, b) => `در حال پیاده‌سازی گفتار انگلیسی با کلادفلر Workers AI… (بخش ${a} از ${b})`],
+  [/^Translating to Persian… (\d+)% \(line (\d+) of (\d+)\)$/, (m, a, b, c) => `در حال ترجمه به فارسی… ${a}٪ (خط ${b} از ${c})`],
+  [/^Translating to Persian with Gemini… (\d+)% \(line (\d+) of (\d+)\)$/, (m, a, b, c) => `در حال ترجمه به فارسی با جمینای… ${a}٪ (خط ${b} از ${c})`],
+  [/^(.+) — downloading (.+) \/ (.+) MB$/, (m, a, b, c) => `${FA_UI[a] || a} — در حال دانلود ${b} / ${c} مگابایت`]
+];
+
+var LANG = "en";
+try {
+  const saved = localStorage.getItem("pss_lang");
+  LANG = saved === "fa" || saved === "en" ? saved : ((navigator.language || "").toLowerCase().startsWith("fa") ? "fa" : "en");
+} catch (_) {}
+
+// Translate one string (keeps surrounding whitespace intact).
+function tr(s) {
+  if (LANG !== "fa" || typeof s !== "string" || !s.trim()) return s;
+  const key = s.trim();
+  if (FA_UI[key]) return s.replace(key, FA_UI[key]);
+  for (const [re, rep] of FA_PATTERNS) if (re.test(key)) return s.replace(key, key.replace(re, rep));
+  return s;
+}
+
+// Live strings are stored in English and re-rendered when the language changes.
+var lastStatusRaw = "";
+var lastErrorRaw = "";
+var doneSeconds = null;
+function renderDoneTime() {
+  const el = $("doneTime");
+  if (!el) return;
+  el.textContent = doneSeconds == null ? "" : (LANG === "fa" ? "⏱ زیرنویس در " : "⏱ subtitles ready in ") + fmtClock(doneSeconds) + (LANG === "fa" ? " آماده شد" : "");
+}
+function renderStageNames() {
+  try {
+    stages.forEach((s, i) => {
+      const row = $("stage" + i);
+      if (row) row.querySelector(".sname").textContent = tr(s.name);
+    });
+  } catch (_) {}
+}
+
+// Static page text is captured once in English so switching back works.
+var I18N_NODES = [], I18N_ATTRS = [];
+(function collectI18n() {
+  const skipTags = new Set(["SCRIPT", "STYLE", "PRE", "CODE", "TEXTAREA"]);
+  const skipIds = new Set(["ptext", "timer", "doneTime", "fname", "fdur", "stages", "errBox", "seglist", "cue", "cueSizeVal", "cueBgVal", "cuePosVal", "num1", "num2", "numDone", "langSel", "cfWorkerCode"]);
+  const blocked = (el) => {
+    for (let p = el; p && p !== document.body; p = p.parentElement) {
+      if (skipTags.has(p.tagName) || skipIds.has(p.id)) return true;
+    }
+    return false;
+  };
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+  let n;
+  while ((n = walker.nextNode())) {
+    if (!n.nodeValue.trim() || blocked(n.parentElement)) continue;
+    I18N_NODES.push({ node: n, en: n.nodeValue });
+  }
+  for (const el of document.querySelectorAll("[placeholder],[title],[aria-label]")) {
+    for (const a of ["placeholder", "title", "aria-label"]) {
+      const v = el.getAttribute(a);
+      if (v && FA_UI[v.trim()]) I18N_ATTRS.push({ el, name: a, en: v });
+    }
+  }
+})();
+
+function applyLang() {
+  const fa = LANG === "fa";
+  document.documentElement.lang = fa ? "fa" : "en";
+  document.documentElement.dir = fa ? "rtl" : "ltr";
+  document.title = fa ? "استودیو زیرنویس فارسی" : "Persian Subtitle Studio";
+  for (const it of I18N_NODES) it.node.nodeValue = fa ? tr(it.en) : it.en;
+  for (const it of I18N_ATTRS) it.el.setAttribute(it.name, fa ? tr(it.en) : it.en);
+  if (lastStatusRaw) $("ptext").textContent = tr(lastStatusRaw);
+  if (lastErrorRaw) $("errBox").textContent = tr(lastErrorRaw);
+  renderStageNames();
+  renderDoneTime();
+  const sel = $("langSel");
+  if (sel) sel.value = LANG;
+}
+$("langSel").addEventListener("change", () => {
+  LANG = $("langSel").value === "fa" ? "fa" : "en";
+  try { localStorage.setItem("pss_lang", LANG); } catch (_) {}
+  applyLang();
+});
+applyLang();
+
+const drop = $("drop"), fileInput = $("fileInput"), goBtn = $("goBtn");
+let currentFile = null, currentUrl = null, segments = [], asrCache = {}, translatorCache = {};
+
+/* ---------- file selection ---------- */
+drop.addEventListener("click", () => fileInput.click());
+drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
+drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", (e) => {
+  e.preventDefault(); drop.classList.remove("over");
+  if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", () => { if (fileInput.files.length) setFile(fileInput.files[0]); });
+$("clearFile").addEventListener("click", clearFile);
+
+/* ---------- Gemini settings UI ---------- */
+const transSel = $("transSel"), geminiKeyInput = $("geminiKey");
+geminiKeyInput.value = localStorage.getItem("pss_gemini_key") || "";
+function syncGeminiRow() { $("geminiRow").classList.toggle("show", transSel.value === "gemini"); }
+transSel.addEventListener("change", syncGeminiRow);
+syncGeminiRow();
+geminiKeyInput.addEventListener("input", () => localStorage.setItem("pss_gemini_key", geminiKeyInput.value.trim()));
+
+/* ---------- Groq settings UI ---------- */
+const modelSel = $("modelSel"), groqKeyInput = $("groqKey");
+groqKeyInput.value = localStorage.getItem("pss_groq_key") || "";
+function syncGroqRow() { $("groqRow").classList.toggle("show", modelSel.value === "groq"); }
+modelSel.addEventListener("change", syncGroqRow);
+syncGroqRow();
+groqKeyInput.addEventListener("input", () => localStorage.setItem("pss_groq_key", groqKeyInput.value.trim()));
+
+/* ---------- Cloudflare Workers AI settings UI ---------- */
+// Cloudflare’s own API refuses cross-origin browser calls, so this path goes
+// through a small Worker the user deploys on their free Cloudflare account.
+const cfWorkerInput = $("cfWorker"), cfSecretInput = $("cfSecret");
+cfWorkerInput.value = localStorage.getItem("pss_cf_worker") || "";
+cfSecretInput.value = localStorage.getItem("pss_cf_secret") || "";
+function syncCfRow() { $("cfRow").classList.toggle("show", modelSel.value === "cloudflare"); }
+modelSel.addEventListener("change", syncCfRow);
+syncCfRow();
+cfWorkerInput.addEventListener("input", () => localStorage.setItem("pss_cf_worker", cfWorkerInput.value.trim()));
+cfSecretInput.addEventListener("input", () => localStorage.setItem("pss_cf_secret", cfSecretInput.value.trim()));
+$("cfCopyBtn").addEventListener("click", async (e) => {
+  try {
+    await navigator.clipboard.writeText($("cfWorkerCode").textContent);
+    e.target.textContent = tr("Copied ✓");
+  } catch (_) {
+    e.target.textContent = tr("Select the code and copy it manually");
+  }
+  setTimeout(() => { e.target.textContent = tr("Copy Worker code"); }, 2500);
+});
+// Everything from the previous file (timer, progress, cues, results) is
+// cleared so each new file starts from a clean slate.
+function resetRun() {
+  stopTimer();
+  timerBase = 0; timerStart = 0;
+  $("timer").textContent = "";
+  doneSeconds = null; lastStatusRaw = ""; lastErrorRaw = "";
+  $("doneTime").textContent = "";
+  $("progressCard").classList.remove("show");
+  $("resultCard").classList.remove("show");
+  segments = [];
+  lastActive = -1;
+  try {
+    cueBox.innerHTML = "";
+    player.pause();
+    player.removeAttribute("src");
+    player.load();
+  } catch (_) {}
+  document.querySelectorAll(".seg.active").forEach((el) => el.classList.remove("active"));
+  const list = $("seglist"); if (list) list.innerHTML = "";
+}
+
+function setFile(f) {
+  resetRun();
+  currentFile = f;
+  if (currentUrl) URL.revokeObjectURL(currentUrl);
+  currentUrl = URL.createObjectURL(f);
+  $("fname").textContent = f.name;
+  $("fdur").textContent = "";
+  $("filemeta").classList.add("show");
+  $("num1").classList.add("done"); $("num1").textContent = "✓";
+  goBtn.disabled = false;
+  hideError();
+  // probe duration
+  const probe = document.createElement("video");
+  probe.preload = "metadata";
+  probe.src = currentUrl;
+  probe.onloadedmetadata = () => {
+    if (isFinite(probe.duration)) $("fdur").textContent = fmtClock(probe.duration) + (loadCheckpoint(fileKey(f)) ? tr(" · saved progress found — will resume") : "");
+  };
+}
+function clearFile() {
+  resetRun();
+  currentFile = null;
+  if (currentUrl) { URL.revokeObjectURL(currentUrl); currentUrl = null; }
+  fileInput.value = "";
+  $("filemeta").classList.remove("show");
+  $("num1").classList.remove("done"); $("num1").textContent = "1";
+  goBtn.disabled = true;
+  $("resultCard").classList.remove("show");
+}
+
+/* ---------- helpers ---------- */
+function fmtClock(s) {
+  s = Math.max(0, s);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
+  return (h ? h + ":" : "") + String(m).padStart(h ? 2 : 1, "0") + ":" + String(sec).padStart(2, "0");
+}
+function fmtSrtTime(s) {
+  s = Math.max(0, s);
+  const h = String(Math.floor(s / 3600)).padStart(2, "0");
+  const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+  const sec = String(Math.floor(s % 60)).padStart(2, "0");
+  const ms = String(Math.round((s % 1) * 1000)).padStart(3, "0");
+  return `${h}:${m}:${sec},${ms}`;
+}
+function fmtVttTime(s) { return fmtSrtTime(s).replace(",", "."); }
+function setStatus(t) { lastStatusRaw = t; $("ptext").textContent = tr(t); }
+
+/* ---------- staged progress ---------- */
+// Each step ("level") of the pipeline gets its own row with a live
+// percentage; the main bar below shows overall progress across all steps.
+let stages = [], curStage = -1;
+function initStages(names) {
+  stages = names.map((name) => ({ name, pct: 0 }));
+  curStage = -1;
+  const box = $("stages");
+  box.innerHTML = "";
+  stages.forEach((s, i) => {
+    const row = document.createElement("div");
+    row.className = "stage pending";
+    row.id = "stage" + i;
+    const icon = document.createElement("span"); icon.className = "sicon"; icon.textContent = i + 1;
+    const name = document.createElement("span"); name.className = "sname"; name.textContent = tr(s.name);
+    const pct = document.createElement("span"); pct.className = "spct";
+    const bar = document.createElement("div"); bar.className = "sbar"; bar.appendChild(document.createElement("div"));
+    row.append(icon, name, pct, bar);
+    box.appendChild(row);
+  });
+  updateOverall();
+}
+function stageStart(i) {
+  for (let j = 0; j < i; j++) stageDone(j);
+  curStage = i;
+  const row = $("stage" + i);
+  if (row) row.className = "stage active";
+  stageProgress(i, 0);
+}
+function stageProgress(i, pct) {
+  const s = stages[i]; if (!s) return;
+  s.pct = Math.max(s.pct, Math.min(100, Math.max(0, pct)));
+  const row = $("stage" + i); if (!row) return;
+  row.querySelector(".spct").textContent = Math.round(s.pct) + "%";
+  row.querySelector(".sbar > div").style.width = s.pct + "%";
+  updateOverall();
+}
+function stageDone(i) {
+  const s = stages[i]; if (!s) return;
+  s.pct = 100;
+  const row = $("stage" + i); if (!row) return;
+  row.className = "stage done";
+  row.querySelector(".sicon").textContent = "✓";
+  row.querySelector(".spct").textContent = "100%";
+  updateOverall();
+}
+function updateOverall() {
+  const total = stages.length ? stages.reduce((a, s) => a + s.pct, 0) / stages.length : 0;
+  $("pfill").style.width = total + "%";
+}
+// Progress from downloads/transcription/translation routes to the active step.
+function setProgress(pct) { if (curStage >= 0) stageProgress(curStage, pct); }
+window.__pss = { initStages, stageStart, stageProgress, stageDone, setProgress, setStatus };
+function showError(msg) { lastErrorRaw = msg; const b = $("errBox"); b.textContent = tr(msg); b.classList.add("show"); }
+function hideError() { lastErrorRaw = ""; $("errBox").classList.remove("show"); }
+
+/* ---------- audio extraction ---------- */
+async function extractAudio(file) {
+  const buf = await file.arrayBuffer();
+  const ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+  let audioBuffer;
+  try {
+    audioBuffer = await ctx.decodeAudioData(buf);
+  } catch (e) {
+    throw new Error("Couldn't read the audio from this file. Try an MP4 (H.264/AAC) or WebM video, or an MP3/WAV audio file.");
+  } finally {
+    ctx.close();
+  }
+  if (audioBuffer.numberOfChannels === 1) return audioBuffer.getChannelData(0);
+  const a = audioBuffer.getChannelData(0), b = audioBuffer.getChannelData(1);
+  const mono = new Float32Array(a.length);
+  for (let i = 0; i < a.length; i++) mono[i] = (a[i] + b[i]) / 2;
+  return mono;
+}
+
+/* ---------- models ---------- */
+async function loadTransformers() {
+  if (!tf) {
+    setStatus("Loading AI engine…");
+    tf = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3");
+  }
+  return tf;
+}
+function makeProgressCb(label) {
+  const files = {};
+  return (p) => {
+    if (p.status === "progress" && p.file) {
+      files[p.file] = { loaded: p.loaded || 0, total: p.total || 0 };
+      let loaded = 0, total = 0;
+      for (const f of Object.values(files)) { loaded += f.loaded; total += f.total; }
+      if (total > 0) {
+        setProgress((loaded / total) * 100);
+        setStatus(`${label} — downloading ${(loaded / 1048576).toFixed(0)} / ${(total / 1048576).toFixed(0)} MB`);
+      }
+    }
+  };
+}
+async function getASR(modelId) {
+  if (asrCache[modelId]) return asrCache[modelId];
+  const { pipeline } = await loadTransformers();
+  const cb = makeProgressCb("Speech model");
+  let p;
+  try {
+    let device = "wasm";
+    if (navigator.gpu) {
+      try { const ad = await navigator.gpu.requestAdapter(); if (ad) device = "webgpu"; } catch (_) {}
+    }
+    p = await pipeline("automatic-speech-recognition", modelId, { device, progress_callback: cb });
+  } catch (e) {
+    p = await pipeline("automatic-speech-recognition", modelId, { progress_callback: cb });
+  }
+  asrCache[modelId] = p;
+  return p;
+}
+const TRANS_LANGS = {
+  "Xenova/m2m100_418M": { src: "en", tgt: "fa", tgtToken: "__fa__" },
+};
+function getTranslator(modelId) {
+  if (!translatorCache[modelId]) {
+    translatorCache[modelId] = loadTransformers().then(({ pipeline }) =>
+      pipeline("translation", modelId, { progress_callback: makeProgressCb("Translation model") })
+    );
+    translatorCache[modelId].catch(() => { delete translatorCache[modelId]; });
+  }
+  return translatorCache[modelId];
+}
+const PERSIAN_RE = /[\u0600-\u06FF]/;
+function extractTranslation(r) {
+  return ((Array.isArray(r) ? r[0]?.translation_text : r?.translation_text) || "").trim();
+}
+function langTokenId(tokenizer, langToken) {
+  try {
+    const direct = tokenizer.model?.tokens_to_ids?.get?.(langToken);
+    if (direct != null) return direct;
+  } catch (_) {}
+  try {
+    for (const id of tokenizer.encode(langToken)) {
+      if (tokenizer.decode([id]).trim() === langToken) return id;
+    }
+  } catch (_) {}
+  return null;
+}
+// Translate one line and verify the output is actually Persian. Some
+// transformers.js builds silently ignore src_lang/tgt_lang, in which case
+// M2M "translates" English back into English — if that happens, retry
+// while explicitly forcing the Persian target-language token.
+async function translateLine(translator, text, langs) {
+  let out = extractTranslation(
+    await translator(text, { src_lang: langs.src, tgt_lang: langs.tgt })
+  );
+  if (out && PERSIAN_RE.test(out)) return out;
+  const forced = langTokenId(translator.tokenizer, langs.tgtToken);
+  if (forced != null) {
+    const retry = extractTranslation(
+      await translator(text, {
+        src_lang: langs.src,
+        tgt_lang: langs.tgt,
+        forced_bos_token_id: forced,
+      })
+    );
+    if (retry) out = retry;
+  }
+  return out;
+}
+
+/* ---------- Gemini API translation ---------- */
+const GEMINI_FALLBACK_MODELS = ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-2.5-flash", "gemini-2.0-flash"];
+const geminiModelCache = {};
+// Ask Google which models this key can actually use, and rank them:
+// newest first, prefer "flash", avoid preview/specialized models.
+function resolveGeminiCandidates(key) {
+  if (!geminiModelCache[key]) {
+    geminiModelCache[key] = (async () => {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}&pageSize=1000`);
+        if (!res.ok) return GEMINI_FALLBACK_MODELS;
+        const data = await res.json();
+        const names = (data?.models || [])
+          .filter((m) => (m.supportedGenerationMethods || []).includes("generateContent"))
+          .map((m) => String(m.name || "").replace(/^models\//, ""))
+          .filter((n) => n.startsWith("gemini") && !/embedding|image|imagen|tts|audio|live|veo|robotics|thinking|computer-use/.test(n));
+        const score = (n) => {
+          let s = parseFloat(n.match(/gemini-(\d+(?:\.\d+)?)/)?.[1] || "0") * 100;
+          if (n.includes("latest")) s += 500;
+          if (n.includes("flash")) s += 50; else if (n.includes("pro")) s += 30; else s -= 100;
+          if (n.includes("lite")) s -= 5;
+          if (/preview|exp/.test(n)) s -= 40;
+          return s;
+        };
+        names.sort((a, b) => score(b) - score(a));
+        return names.length ? names.concat(GEMINI_FALLBACK_MODELS.filter((f) => !names.includes(f))) : GEMINI_FALLBACK_MODELS;
+      } catch (_) {
+        return GEMINI_FALLBACK_MODELS;
+      }
+    })();
+    geminiModelCache[key].catch(() => { delete geminiModelCache[key]; });
+  }
+  return geminiModelCache[key];
+}
+async function translateWithGemini(segs, ckptKey) {
+  const key = geminiKeyInput.value.trim();
+  const candidates = await resolveGeminiCandidates(key);
+  let modelIdx = 0;
+  const BATCH = 20;
+  // Resume support: only translate the lines that don't have Persian text yet.
+  const todo = segs.filter((s) => !s.fa);
+  const total = segs.length;
+  for (let i = 0; i < todo.length; i += BATCH) {
+    const batch = todo.slice(i, i + BATCH);
+    const doneCount = total - todo.length + i;
+    setStatus(`Translating to Persian with Gemini… ${Math.round((doneCount / total) * 100)}% (line ${doneCount + 1} of ${total})`);
+    setProgress((doneCount / total) * 100);
+    let ok = false, lastErr = null;
+    while (!ok && modelIdx < candidates.length) {
+      try {
+        const out = await geminiTranslateBatch(key, candidates[modelIdx], batch.map((s) => s.en));
+        batch.forEach((s, j) => { s.fa = String(out[j] ?? "").trim() || s.en; });
+        ok = true;
+      } catch (e) {
+        lastErr = e;
+        // If this model is unavailable/retired/out of quota, try the next one.
+        const msg = String(e?.message || e);
+        if (modelIdx < candidates.length - 1 && /model|not found|not available|no longer|deprecated|unsupported|quota/i.test(msg)) {
+          modelIdx++;
+        } else break;
+      }
+    }
+    if (!ok) {
+      // Save what is done so the next run resumes here instead of starting over.
+      saveCheckpoint(ckptKey, { phase: "translate", segments: segs });
+      const doneSoFar = segs.filter((s) => s.fa).length;
+      throw new Error(
+        "Gemini translation failed: " + (lastErr?.message || lastErr) +
+        `. Your progress is saved (${doneSoFar} of ${total} lines translated, transcription kept) — click “Generate Persian subtitles” again to continue from where it stopped, or switch to a local translation model.`
+      );
+    }
+    saveCheckpoint(ckptKey, { phase: "translate", segments: segs }); // checkpoint after every successful batch
+  }
+}
+async function geminiTranslateBatch(key, model, lines, attempt = 0) {
+  const prompt =
+    "Translate these English subtitle lines into natural, fluent Persian (Farsi).\n" +
+    `Return ONLY a JSON array of exactly ${lines.length} strings — one Persian translation per input line, in the same order. No explanations.\n\n` +
+    JSON.stringify(lines);
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.2, response_mime_type: "application/json" },
+      }),
+    }
+  );
+  if (!res.ok) {
+    if ((res.status === 429 || res.status >= 500) && attempt < 2) {
+      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+      return geminiTranslateBatch(key, model, lines, attempt + 1);
+    }
+    let msg = `HTTP ${res.status}`;
+    try { msg = (await res.json())?.error?.message || msg; } catch (_) {}
+    throw new Error(msg);
+  }
+  const data = await res.json();
+  const text = (data?.candidates?.[0]?.content?.parts || []).map((p) => p.text || "").join("");
+  const arr = JSON.parse(text.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/, ""));
+  if (!Array.isArray(arr)) throw new Error("Unexpected response format");
+  return arr;
+}
+
+// Merge Whisper's short fragments into full sentences before translating.
+// Translating complete sentences (instead of mid-sentence fragments) greatly
+// improves translation quality, and makes subtitles easier to read.
+// One cue = one sentence. These caps keep a single cue from becoming a wall
+// of text when a sentence is unusually long.
+const MAX_CUE_CHARS = 90;   // characters per subtitle line
+const MAX_CUE_SEC = 7;      // seconds a single subtitle may stay on screen
+
+// Split text into sentences, keeping the ending punctuation with its sentence.
+function splitSentences(text) {
+  const t = (text || "").trim();
+  if (!t) return [];
+  const parts = t.match(/[^.!?\u2026\u061f\u06d4]+[.!?\u2026\u061f\u06d4]+["')\]]*|[^.!?\u2026\u061f\u06d4]+/g);
+  return (parts || [t]).map((p) => p.trim()).filter(Boolean);
+}
+
+// Split one timed chunk into several, sharing its time by text length.
+function splitTimed(seg, pieces) {
+  if (pieces.length <= 1) return [{ start: seg.start, end: seg.end, en: (pieces[0] || seg.en).trim(), fa: "" }];
+  const total = pieces.reduce((n, p) => n + p.length, 0) || 1;
+  const dur = Math.max(0, seg.end - seg.start);
+  let t = seg.start;
+  return pieces.map((p, i) => {
+    const d = dur * (p.length / total);
+    const out = { start: t, end: i === pieces.length - 1 ? seg.end : t + d, en: p.trim(), fa: "" };
+    t += d;
+    return out;
+  });
+}
+
+// Break an unusually long sentence into readable lines.
+function splitLong(seg) {
+  const txt = (seg.en || "").trim();
+  if (txt.length <= MAX_CUE_CHARS && seg.end - seg.start <= MAX_CUE_SEC) return [seg];
+  const n = Math.max(2, Math.ceil(Math.max(txt.length / MAX_CUE_CHARS, (seg.end - seg.start) / MAX_CUE_SEC)));
+  const target = Math.ceil(txt.length / n);
+  const pieces = [];
+  let cur = "";
+  for (const w of txt.split(/\s+/)) {
+    const cand = cur ? cur + " " + w : w;
+    if (cur && cand.length > target) { pieces.push(cur); cur = w; }
+    else cur = cand;
+  }
+  if (cur) pieces.push(cur);
+  return splitTimed(seg, pieces);
+}
+
+function mergeSegments(segs) {
+  const endsSentence = (t) => /[.!?\u2026\u061f\u06d4]["')\]]?$/.test(t.trim());
+  // 1) A fragment may already contain several sentences — split those apart.
+  const atoms = [];
+  for (const s of segs) {
+    const pieces = splitSentences(s.en);
+    if (!pieces.length) continue;
+    for (const a of splitTimed(s, pieces)) atoms.push(a);
+  }
+  // 2) Join fragments only until one sentence is complete, then close the cue.
+  const merged = [];
+  let cur = null;
+  for (const a of atoms) {
+    if (!cur) cur = { start: a.start, end: a.end, en: a.en.trim(), fa: "" };
+    else { cur.en = (cur.en + " " + a.en).trim(); cur.end = a.end; }
+    if (endsSentence(cur.en) || cur.en.length > MAX_CUE_CHARS * 1.6 || cur.end - cur.start > MAX_CUE_SEC) {
+      merged.push(cur);
+      cur = null;
+    }
+  }
+  if (cur) merged.push(cur);
+  // 3) Break any remaining over-long sentence into readable lines.
+  const out = [];
+  for (const m of merged) for (const p of splitLong(m)) out.push(p);
+  return out.filter((s) => s.en.trim().length > 0);
+}
+
+/* ---------- elapsed timer ---------- */
+// Counts how long generating the subtitles takes. Resumed runs continue
+// from the saved elapsed time, so the final number is the real total.
+let timerStart = 0, timerBase = 0, timerInt = null;
+function elapsedMs() { return timerBase + (timerStart ? Date.now() - timerStart : 0); }
+function startTimer(baseMs) {
+  timerBase = baseMs || 0; timerStart = Date.now();
+  clearInterval(timerInt);
+  const tick = () => { $("timer").textContent = "⏱ " + fmtClock(elapsedMs() / 1000); };
+  tick();
+  timerInt = setInterval(tick, 250);
+}
+function stopTimer() { clearInterval(timerInt); timerInt = null; timerBase = elapsedMs(); timerStart = 0; return timerBase; }
+
+/* ---------- step checkpoints (resume after errors) ---------- */
+// Every completed step is saved in this browser, keyed to the exact file.
+// If a later step fails (e.g. a Gemini upload error), clicking Generate
+// again resumes from the last saved step instead of redoing everything.
+const CKPT_LS = "pss_checkpoint";
+function fileKey(f) { return [f.name, f.size, f.lastModified].join("|"); }
+function loadCheckpoint(key) {
+  try {
+    const c = JSON.parse(localStorage.getItem(CKPT_LS) || "null");
+    if (c && c.key === key && Array.isArray(c.segments)) return c;
+  } catch (_) {}
+  return null;
+}
+function saveCheckpoint(key, data) {
+  try { localStorage.setItem(CKPT_LS, JSON.stringify({ key, savedAt: Date.now(), elapsedMs: elapsedMs(), ...data })); }
+  catch (_) { /* storage full — checkpointing is best-effort */ }
+}
+function clearCheckpoint() { try { localStorage.removeItem(CKPT_LS); } catch (_) {} }
+
+/* ---------- Groq cloud transcription (online Whisper) ---------- */
+function encodeWav(f32, sampleRate) {
+  const buf = new ArrayBuffer(44 + f32.length * 2);
+  const v = new DataView(buf);
+  const wstr = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  wstr(0, "RIFF"); v.setUint32(4, 36 + f32.length * 2, true); wstr(8, "WAVE");
+  wstr(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  wstr(36, "data"); v.setUint32(40, f32.length * 2, true);
+  for (let i = 0; i < f32.length; i++) {
+    const s = Math.max(-1, Math.min(1, f32[i]));
+    v.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return new Blob([buf], { type: "audio/wav" });
+}
+async function groqTranscribeChunk(key, blob, attempt = 0) {
+  const fd = new FormData();
+  fd.append("file", blob, "audio.wav");
+  fd.append("model", "whisper-large-v3-turbo");
+  fd.append("language", "en");
+  fd.append("temperature", "0");
+  fd.append("response_format", "verbose_json");
+  const res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + key },
+    body: fd,
+  });
+  if (!res.ok) {
+    if ((res.status === 429 || res.status >= 500) && attempt < 3) {
+      await new Promise((r) => setTimeout(r, 4000 * (attempt + 1))); // free tier rate limit: wait and retry
+      return groqTranscribeChunk(key, blob, attempt + 1);
+    }
+    let msg = `HTTP ${res.status}`;
+    try { msg = (await res.json())?.error?.message || msg; } catch (_) {}
+    throw new Error("Groq transcription failed: " + msg + " — check your API key and internet connection, or switch back to a local Whisper model.");
+  }
+  return res.json();
+}
+async function transcribeWithGroq(audio, durationSec, ckpt, ckptKey) {
+  const key = groqKeyInput.value.trim();
+  const SR = 16000, CHUNK_SEC = 600; // 10-minute chunks stay well under Groq's free 25 MB upload limit
+  const chunks = Math.max(1, Math.ceil(durationSec / CHUNK_SEC));
+  // Resume support: pick up from the last completed 10-minute part.
+  const segs = ckpt && Array.isArray(ckpt.segments) ? ckpt.segments.map((s) => ({ ...s })) : [];
+  const startChunk = ckpt ? Math.min(ckpt.chunkIndex || 0, chunks) : 0;
+  for (let c = startChunk; c < chunks; c++) {
+    setStatus(`Transcribing English speech with Groq… (part ${c + 1} of ${chunks})`);
+    setProgress((c / chunks) * 100);
+    const part = audio.subarray(c * CHUNK_SEC * SR, Math.min(audio.length, (c + 1) * CHUNK_SEC * SR));
+    let data;
+    try {
+      data = await groqTranscribeChunk(key, encodeWav(part, SR));
+    } catch (e) {
+      saveCheckpoint(ckptKey, { phase: "transcribe", chunkIndex: c, segments: segs });
+      throw new Error((e?.message || e) + (c > 0 ? ` Parts 1–${c} are already saved — click “Generate Persian subtitles” again to continue from part ${c + 1}.` : ""));
+    }
+    const offset = c * CHUNK_SEC;
+    for (const s of data.segments || []) {
+      segs.push({ start: (s.start ?? 0) + offset, end: (s.end ?? (s.start ?? 0) + 4) + offset, en: (s.text || "").trim(), fa: "" });
+    }
+    if (!(data.segments || []).length && (data.text || "").trim()) {
+      segs.push({ start: offset, end: Math.min(durationSec, offset + CHUNK_SEC), en: data.text.trim(), fa: "" });
+    }
+    saveCheckpoint(ckptKey, { phase: "transcribe", chunkIndex: c + 1, segments: segs }); // checkpoint after every part
+    setProgress(((c + 1) / chunks) * 100);
+  }
+  return segs.filter((s) => s.en.length > 0);
+}
+
+/* ---------- Cloudflare Workers AI transcription (online Whisper) ---------- */
+// Runs @cf/openai/whisper-large-v3-turbo through the Workers AI REST API.
+// The free Workers plan includes 10,000 neurons/day (~3 hours of audio).
+function blobToBase64(blob) {
+  // FileReader keeps big audio chunks off the JS stack (btoa on a huge string can overflow).
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(String(fr.result).split(",")[1] || "");
+    fr.onerror = () => reject(new Error("Could not encode the audio chunk."));
+    fr.readAsDataURL(blob);
+  });
+}
+async function cfTranscribeChunk(workerUrl, secret, blob, attempt = 0) {
+  const audioB64 = await blobToBase64(blob);
+  const headers = { "Content-Type": "application/json" };
+  if (secret) headers["X-App-Secret"] = secret;
+  let res;
+  try {
+    res = await fetch(workerUrl, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ audio: audioB64, task: "transcribe", language: "en" }),
+    });
+  } catch (e) {
+    throw new Error(
+      "Could not reach your Cloudflare Worker (" + (e?.message || e) + "). Open the Worker URL in a new tab to check it is deployed " +
+      "and that the Worker code includes the CORS headers, or switch to the Groq cloud model or a local Whisper model."
+    );
+  }
+  if (!res.ok) {
+    if ((res.status === 429 || res.status >= 500) && attempt < 3) {
+      await new Promise((r) => setTimeout(r, 4000 * (attempt + 1))); // rate limited — wait and retry
+      return cfTranscribeChunk(workerUrl, secret, blob, attempt + 1);
+    }
+    let msg = `HTTP ${res.status}`;
+    try {
+      const j = await res.json();
+      msg = (j?.errors || []).map((e) => e.message).join("; ") || msg;
+    } catch (_) {}
+    let hint = " — check the Worker URL, and that its Workers AI binding is named exactly AI.";
+    if (/neuron/i.test(msg)) hint = " — the daily free allocation of 10,000 neurons is used up. It resets at 00:00 UTC; until then use the Groq cloud model or a local Whisper model.";
+    else if (res.status === 403) hint = " — the app secret did not match the APP_SECRET set on your Worker.";
+    else if (res.status === 404) hint = " — that URL did not match a deployed Worker.";
+    throw new Error("Cloudflare transcription failed: " + msg + hint);
+  }
+  const json = await res.json();
+  if (json?.success === false) {
+    const msg = (json.errors || []).map((e) => e.message).join("; ") || "unknown error";
+    throw new Error("Cloudflare transcription failed: " + msg);
+  }
+  return json.result || json || {};
+}
+// Fallback when the model returns only a VTT track instead of segment objects.
+function parseVtt(vtt) {
+  const out = [];
+  const toSec = (t) => {
+    const p = t.trim().split(":").map(parseFloat);
+    return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p[0] * 60 + p[1];
+  };
+  for (const block of String(vtt || "").split(/\r?\n\r?\n/)) {
+    const lines = block.split(/\r?\n/).filter((l) => l.trim() && !/^WEBVTT/i.test(l));
+    const tIdx = lines.findIndex((l) => l.includes("-->"));
+    if (tIdx === -1) continue;
+    const [a, b] = lines[tIdx].split("-->");
+    const text = lines.slice(tIdx + 1).join(" ").trim();
+    if (text) out.push({ start: toSec(a), end: toSec(b), text });
+  }
+  return out;
+}
+async function transcribeWithCloudflare(audio, durationSec, ckpt, ckptKey) {
+  const workerUrl = cfWorkerInput.value.trim().replace(/\/+$/, ""), secret = cfSecretInput.value.trim();
+  const SR = 16000, CHUNK_SEC = 300; // 5-minute chunks keep each request small and fast
+  const chunks = Math.max(1, Math.ceil(durationSec / CHUNK_SEC));
+  // Resume support: pick up from the last completed part.
+  const segs = ckpt && Array.isArray(ckpt.segments) ? ckpt.segments.map((s) => ({ ...s })) : [];
+  const startChunk = ckpt ? Math.min(ckpt.chunkIndex || 0, chunks) : 0;
+  for (let c = startChunk; c < chunks; c++) {
+    setStatus(`Transcribing English speech with Cloudflare Workers AI… (part ${c + 1} of ${chunks})`);
+    setProgress((c / chunks) * 100);
+    const part = audio.subarray(c * CHUNK_SEC * SR, Math.min(audio.length, (c + 1) * CHUNK_SEC * SR));
+    let data;
+    try {
+      data = await cfTranscribeChunk(workerUrl, secret, encodeWav(part, SR));
+    } catch (e) {
+      saveCheckpoint(ckptKey, { phase: "transcribe", chunkIndex: c, segments: segs });
+      throw new Error((e?.message || e) + (c > 0 ? ` Parts 1–${c} are already saved — click “Generate Persian subtitles” again to continue from part ${c + 1}.` : ""));
+    }
+    const offset = c * CHUNK_SEC;
+    let list = Array.isArray(data.segments) ? data.segments : [];
+    if (!list.length && data.vtt) list = parseVtt(data.vtt);
+    for (const s of list) {
+      const text = (s.text ?? s.word ?? "").trim();
+      if (!text) continue;
+      segs.push({ start: (s.start ?? 0) + offset, end: (s.end ?? (s.start ?? 0) + 4) + offset, en: text, fa: "" });
+    }
+    if (!list.length && (data.text || "").trim()) {
+      segs.push({ start: offset, end: Math.min(durationSec, offset + CHUNK_SEC), en: data.text.trim(), fa: "" });
+    }
+    saveCheckpoint(ckptKey, { phase: "transcribe", chunkIndex: c + 1, segments: segs }); // checkpoint after every part
+    setProgress(((c + 1) / chunks) * 100);
+  }
+  return segs.filter((s) => s.en.length > 0);
+}
+
+/* ---------- main flow ---------- */
+goBtn.addEventListener("click", generate);
+async function generate() {
+  if (!currentFile) return;
+  if (transSel.value === "gemini" && !geminiKeyInput.value.trim()) {
+    showError("Enter your Gemini API key in Settings first, or switch to a local translation model.");
+    geminiKeyInput.focus();
+    return;
+  }
+  if (modelSel.value === "groq" && !groqKeyInput.value.trim()) {
+    showError("Enter your Groq API key in Settings first, or switch to a local Whisper model.");
+    groqKeyInput.focus();
+    return;
+  }
+  if (modelSel.value === "cloudflare") {
+    const wu = cfWorkerInput.value.trim();
+    if (!/^https?:\/\/.+/i.test(wu)) {
+      showError("Enter the URL of your Cloudflare Worker in Settings first (see the one-time setup steps there), or switch to a local Whisper model.");
+      cfWorkerInput.focus();
+      return;
+    }
+    if (/api\.cloudflare\.com/i.test(wu)) {
+      showError("That is Cloudflare’s own API, which browsers are not allowed to call. Deploy the small Worker described in Settings and paste its URL instead.");
+      cfWorkerInput.focus();
+      return;
+    }
+  }
+  hideError();
+  goBtn.disabled = true;
+  $("progressCard").classList.add("show");
+  $("resultCard").classList.remove("show");
+  doneSeconds = null; $("doneTime").textContent = "";
+  // Start counting the moment the button is pressed (resumed runs keep their
+  // saved elapsed time), before any of the slow work begins.
+  const ckptKey = fileKey(currentFile);
+  let ckpt = loadCheckpoint(ckptKey);
+  startTimer(ckpt ? ckpt.elapsedMs || 0 : 0);
+  await new Promise((r) => requestAnimationFrame(() => r())); // let the timer paint first
+  const cloudAsr = modelSel.value === "groq" || modelSel.value === "cloudflare" ? modelSel.value : null;
+  const useGroq = cloudAsr !== null; // "cloud transcription" path (Groq or Cloudflare Workers AI)
+  const stageNames = ["Extract audio"];
+  if (!useGroq) stageNames.push("Load speech model");
+  stageNames.push(
+    cloudAsr === "groq" ? "Transcribe English speech (Groq cloud)"
+      : cloudAsr === "cloudflare" ? "Transcribe English speech (Cloudflare Workers AI)"
+      : "Transcribe English speech"
+  );
+  if ($("transSel").value === "gemini") stageNames.push("Translate to Persian (Gemini)");
+  else stageNames.push("Load translation model", "Translate to Persian");
+  initStages(stageNames);
+  const stTranscribe = useGroq ? 1 : 2, stTranslate = stTranscribe + 1;
+  stageStart(0);
+  setProgress(40);
+  try {
+    // Resume support: reuse saved progress for this exact file so a failed
+    // step (e.g. a Gemini upload error) never redoes the work before it.
+    if (ckpt && ckpt.phase === "transcribe" && !useGroq) ckpt = null; // partial transcription can only resume on the cloud paths
+    if (ckpt && ckpt.phase === "translate") {
+      segments = ckpt.segments.map((s) => ({ ...s }));
+      for (let i = 0; i <= stTranscribe; i++) { stageStart(i); stageDone(i); }
+      setStatus("Resumed from saved progress — transcription already done.");
+    } else {
+    setStatus("Extracting audio from video…");
+    const audio = await extractAudio(currentFile);
+    if (audio.length < 1600) throw new Error("This file appears to have no audio.");
+
+    const durationSec = audio.length / 16000;
+    if (useGroq) {
+      stageStart(stTranscribe);
+      const resumeCkpt = ckpt && ckpt.phase === "transcribe" ? ckpt : null;
+      if (cloudAsr === "cloudflare") {
+        setStatus("Transcribing English speech with Cloudflare Workers AI…");
+        segments = await transcribeWithCloudflare(audio, durationSec, resumeCkpt, ckptKey);
+      } else {
+        setStatus("Transcribing English speech with Groq…");
+        segments = await transcribeWithGroq(audio, durationSec, resumeCkpt, ckptKey);
+      }
+    } else {
+    stageStart(1);
+    setStatus("Loading speech model…");
+    const asr = await getASR($("modelSel").value);
+
+    stageStart(2);
+    setStatus("Transcribing English speech… 0%");
+    const CHUNK_S = 30, STRIDE_S = 5;
+    const hopS = CHUNK_S - 2 * STRIDE_S; // seconds of audio advanced per chunk
+    const totalChunks = durationSec <= CHUNK_S ? 1 : 1 + Math.ceil((durationSec - CHUNK_S) / hopS);
+    let chunksDone = 0, lastPct = 0;
+    const showPct = (pct) => {
+      pct = Math.min(99, Math.max(lastPct, pct)); // keep the bar monotonic
+      lastPct = pct;
+      setProgress(pct);
+      const done = durationSec * (pct / 100);
+      setStatus(`Transcribing English speech… ${Math.round(pct)}% (${fmtClock(done)} / ${fmtClock(durationSec)} of audio)`);
+    };
+    // Fine-grained progress: follow Whisper's decoded timestamps as it moves
+    // through the audio, so the percentage updates live even mid-chunk and
+    // for short files that fit in a single chunk.
+    let streamer = null;
+    try {
+      const { WhisperTextStreamer } = await loadTransformers();
+      const timePrecision =
+        (asr.processor?.feature_extractor?.config?.chunk_length ?? 30) /
+        (asr.model?.config?.max_source_positions ?? 1500);
+      streamer = new WhisperTextStreamer(asr.tokenizer, {
+        time_precision: timePrecision,
+        callback_function: () => {},
+        on_chunk_start: (t) => {
+          showPct(((chunksDone * hopS + (t || 0)) / durationSec) * 100);
+        },
+      });
+    } catch (_) { /* older engine: fall back to per-chunk progress */ }
+    const out = await asr(audio, {
+      return_timestamps: true,
+      chunk_length_s: CHUNK_S,
+      stride_length_s: STRIDE_S,
+      ...(streamer ? { streamer } : { callback_function: () => {} }),
+      chunk_callback: () => {
+        chunksDone++;
+        showPct((chunksDone / totalChunks) * 100); // coarse per-chunk fallback
+      },
+    });
+
+    segments = (out.chunks || [])
+      .map((c) => ({
+        start: c.timestamp?.[0] ?? 0,
+        end: c.timestamp?.[1] ?? (c.timestamp?.[0] ?? 0) + 4,
+        en: (c.text || "").trim(),
+        fa: "",
+      }))
+      .filter((s) => s.en.length > 0);
+    if (!segments.length && (out.text || "").trim()) {
+      segments = [{ start: 0, end: durationSec, en: out.text.trim(), fa: "" }];
+    }
+    } // end of local (in-browser) Whisper path
+    if (!segments.length) throw new Error("No English speech was detected in this file.");
+
+    segments = mergeSegments(segments);
+    saveCheckpoint(ckptKey, { phase: "translate", segments }); // transcription done — never redo it after a later error
+    } // end of fresh (non-resumed) transcription path
+
+    const transModel = $("transSel").value;
+    if (transModel === "gemini") {
+      stageStart(stTranslate);
+      await translateWithGemini(segments, ckptKey);
+      stageDone(stTranslate);
+    } else {
+      const langs = TRANS_LANGS[transModel];
+      stageStart(stTranslate);
+      setStatus("Loading translation model…");
+      const translator = await getTranslator(transModel);
+      stageStart(stTranslate + 1);
+      let untranslated = 0, lastTransErr = null;
+      for (let i = 0; i < segments.length; i++) {
+        setStatus(`Translating to Persian… ${Math.round((i / segments.length) * 100)}% (line ${i + 1} of ${segments.length})`);
+        setProgress((i / segments.length) * 100);
+        if (segments[i].fa) continue; // already translated in a previous run — skip
+        try {
+          const fa = await translateLine(translator, segments[i].en, langs);
+          if (fa && PERSIAN_RE.test(fa)) {
+            segments[i].fa = fa;
+          } else {
+            untranslated++;
+            segments[i].fa = segments[i].en; // keep English if this line couldn't be translated
+          }
+        } catch (e) {
+          lastTransErr = e;
+          untranslated++;
+          segments[i].fa = segments[i].en; // keep English if a single line fails
+        }
+        if (i % 10 === 9) saveCheckpoint(ckptKey, { phase: "translate", segments }); // checkpoint every 10 lines
+      }
+      saveCheckpoint(ckptKey, { phase: "translate", segments });
+      if (untranslated >= segments.length) {
+        try { await caches.delete("transformers-cache"); } catch (_) {}
+        delete translatorCache[transModel];
+        throw new Error(
+          "The local translation model returned English instead of Persian" +
+          (lastTransErr ? " (" + (lastTransErr.message || lastTransErr) + ")" : "") +
+          ". Its downloaded files may be corrupted, so the cached model was cleared — click “Generate Persian subtitles” again to re-download it and retry. If it still fails, switch the translation option to the Gemini API."
+        );
+      }
+      stageDone(stTranslate + 1);
+    }
+
+    buildResults();
+    const totalSec = stopTimer() / 1000;
+    doneSeconds = totalSec; renderDoneTime();
+    clearCheckpoint(); // everything finished — the next run starts fresh
+    $("progressCard").classList.remove("show");
+  } catch (e) {
+    console.error(e);
+    stopTimer(); // elapsed time is saved with the checkpoint and resumes with it
+    $("progressCard").classList.remove("show");
+    showError(e?.message || "Something went wrong. Please check your internet connection (needed once to download the models) and try again.");
+  } finally {
+    goBtn.disabled = !currentFile;
+  }
+}
+
+/* ---------- results ---------- */
+const player = $("player"), cueBox = $("cue");
+
+/* ---------- subtitle appearance ---------- */
+const videobox = $("videobox");
+const CUE_DEFAULTS = { size: 100, color: "#ffffff", bg: "#000000", bgOpacity: 72, pos: 8 };
+let cuePrefs = { ...CUE_DEFAULTS };
+try { cuePrefs = { ...CUE_DEFAULTS, ...JSON.parse(localStorage.getItem("pss_cue_prefs") || "{}") }; } catch (_) {}
+function hexToRgb(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  const n = parseInt(m ? m[1] : "000000", 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function applyCuePrefs() {
+  const [r, g, b] = hexToRgb(cuePrefs.bg);
+  videobox.style.setProperty("--cue-scale", cuePrefs.size / 100);
+  videobox.style.setProperty("--cue-color", cuePrefs.color);
+  videobox.style.setProperty("--cue-bg", `rgba(${r},${g},${b},${cuePrefs.bgOpacity / 100})`);
+  videobox.style.setProperty("--cue-bottom", cuePrefs.pos + "%");
+  $("cueSize").value = cuePrefs.size; $("cueSizeVal").textContent = cuePrefs.size + "%";
+  $("cueColor").value = cuePrefs.color;
+  $("cueBg").value = cuePrefs.bg;
+  $("cueBgOpacity").value = cuePrefs.bgOpacity; $("cueBgVal").textContent = cuePrefs.bgOpacity + "%";
+  $("cuePos").value = cuePrefs.pos; $("cuePosVal").textContent = cuePrefs.pos + "%";
+  try { localStorage.setItem("pss_cue_prefs", JSON.stringify(cuePrefs)); } catch (_) {}
+}
+$("cueSize").addEventListener("input", () => { cuePrefs.size = +$("cueSize").value; applyCuePrefs(); });
+$("cueColor").addEventListener("input", () => { cuePrefs.color = $("cueColor").value; applyCuePrefs(); });
+$("cueBg").addEventListener("input", () => { cuePrefs.bg = $("cueBg").value; applyCuePrefs(); });
+$("cueBgOpacity").addEventListener("input", () => { cuePrefs.bgOpacity = +$("cueBgOpacity").value; applyCuePrefs(); });
+$("cuePos").addEventListener("input", () => { cuePrefs.pos = +$("cuePos").value; applyCuePrefs(); });
+$("cueReset").addEventListener("click", () => { cuePrefs = { ...CUE_DEFAULTS }; applyCuePrefs(); });
+applyCuePrefs();
+
+/* ---------- playback controls ---------- */
+$("speedSel").addEventListener("change", () => { player.playbackRate = +$("speedSel").value; });
+$("back5").addEventListener("click", () => { player.currentTime = Math.max(0, player.currentTime - 5); });
+$("fwd5").addEventListener("click", () => { player.currentTime = Math.min(player.duration || Infinity, player.currentTime + 5); });
+function jumpLine(dir) {
+  if (!segments.length) return;
+  let i = activeIndex(player.currentTime);
+  if (i < 0) {
+    let next = segments.findIndex((s) => s.start > player.currentTime);
+    if (next < 0) next = segments.length;
+    i = dir > 0 ? next : next - 1;
+  } else {
+    i += dir;
+  }
+  i = Math.max(0, Math.min(segments.length - 1, i));
+  player.currentTime = segments[i].start + 0.01;
+  player.play();
+}
+$("prevLine").addEventListener("click", () => jumpLine(-1));
+$("nextLine").addEventListener("click", () => jumpLine(1));
+$("fsBtn").addEventListener("click", () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else if (videobox.requestFullscreen) videobox.requestFullscreen();
+});
+function buildResults() {
+  player.src = currentUrl;
+  const list = $("seglist");
+  list.innerHTML = "";
+  segments.forEach((s, i) => {
+    const row = document.createElement("div");
+    row.className = "seg";
+    row.dataset.i = i;
+    const t = document.createElement("div");
+    t.className = "time";
+    t.textContent = fmtClock(s.start) + " – " + fmtClock(s.end);
+    const en = document.createElement("div");
+    en.className = "en";
+    en.textContent = s.en;
+    const fa = document.createElement("div");
+    fa.className = "fa";
+    fa.contentEditable = "plaintext-only";
+    fa.spellcheck = false;
+    fa.textContent = s.fa;
+    fa.addEventListener("input", () => { segments[i].fa = fa.textContent.trim(); });
+    fa.addEventListener("click", (e) => e.stopPropagation());
+    row.addEventListener("click", () => { player.currentTime = s.start + 0.01; player.play(); });
+    row.append(t, en, fa);
+    list.appendChild(row);
+  });
+  $("resultCard").classList.add("show");
+  $("resultCard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function activeIndex(t) {
+  for (let i = 0; i < segments.length; i++) {
+    if (t >= segments[i].start && t <= segments[i].end) return i;
+  }
+  return -1;
+}
+let lastActive = -1;
+function renderCue() {
+  if (!segments.length || !$("resultCard").classList.contains("show")) return;
+  const i = activeIndex(player.currentTime);
+  if (i === lastActive) return;
+  lastActive = i;
+  cueBox.innerHTML = "";
+  document.querySelectorAll(".seg.active").forEach((el) => el.classList.remove("active"));
+  if (i >= 0) {
+    const span = document.createElement("span");
+    span.textContent = segments[i].fa;
+    if ($("styleSel").value === "both") {
+      const en = document.createElement("span");
+      en.className = "en";
+      en.textContent = segments[i].en;
+      span.appendChild(document.createElement("br"));
+      cueBox.append(span);
+      const wrap = document.createElement("span");
+      wrap.className = "en";
+      wrap.textContent = segments[i].en;
+      cueBox.appendChild(wrap);
+    } else {
+      cueBox.append(span);
+    }
+    const row = document.querySelector(`.seg[data-i="${i}"]`);
+    if (row) row.classList.add("active");
+  }
+}
+player.addEventListener("timeupdate", renderCue);
+setInterval(renderCue, 200);
+
+/* ---------- downloads ---------- */
+function baseName() { return (currentFile?.name || "video").replace(/\.[^.]+$/, ""); }
+function downloadText(name, text, mime) {
+  const blob = new Blob(["\uFEFF" + text], { type: mime + ";charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+function toSrt(key) {
+  return segments.map((s, i) => `${i + 1}\n${fmtSrtTime(s.start)} --> ${fmtSrtTime(s.end)}\n${s[key]}\n`).join("\n");
+}
+function toVtt(key) {
+  return "WEBVTT\n\n" + segments.map((s, i) => `${i + 1}\n${fmtVttTime(s.start)} --> ${fmtVttTime(s.end)}\n${s[key]}\n`).join("\n");
+}
+$("dlFaSrt").addEventListener("click", () => downloadText(baseName() + ".fa.srt", toSrt("fa"), "text/plain"));
+$("dlEnSrt").addEventListener("click", () => downloadText(baseName() + ".en.srt", toSrt("en"), "text/plain"));
+$("dlFaVtt").addEventListener("click", () => downloadText(baseName() + ".fa.vtt", toVtt("fa"), "text/vtt"));
+</script>
+</body>
+</html>
